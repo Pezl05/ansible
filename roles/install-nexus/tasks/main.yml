@@ -1,0 +1,156 @@
+---
+- name: Install system updates
+  ansible.builtin.yum:
+    name: '*'
+    state: latest
+    update_cache: true
+    update_only: true
+
+- name: Get firewalld Status
+  ansible.builtin.systemd:
+    name: "firewalld"
+  register: firewalld_service_status
+
+- name: Debug firewalld status
+  ansible.builtin.debug:
+    msg: "Firewalld Status is {{ firewalld_service_status.status.ActiveState }}"
+
+- name: Setting firewalld http/https
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    zone: public
+    permanent: true
+    state: enabled
+  with_items:
+    - http
+    - https
+  when: firewalld_service_status.status.ActiveState == "active"
+
+- name: Setting firewalld port
+  ansible.posix.firewalld:
+    port: "8081/tcp"
+    permanent: true
+    state: enabled
+  when: firewalld_service_status.status.ActiveState == "active"
+
+- name: Add masquerade
+  ansible.posix.firewalld:
+    masquerade: true
+    state: enabled
+    permanent: true
+  when: firewalld_service_status.status.ActiveState == "active"
+
+- name: Reload service firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    state: reloaded
+  when: firewalld_service_status.status.ActiveState == "active"
+
+- name: Install Package
+  ansible.builtin.yum:
+    state: present
+    name:
+      - java-1.8.0-openjdk.x86_64
+      - bash-completion
+      - net-tools
+      - unzip
+      - tar
+      - gzip
+      - vim
+      - wget
+
+- name: Add User Nexus
+  ansible.builtin.user:
+    name: nexus
+    comment: user for software sonatype nexus
+
+- name: Create directory app 
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: directory
+    owner: nexus
+    group: nexus
+    mode: '0755'
+  loop:
+    - /opt/app
+    - /var/log/nexus
+
+- name: Download Nexus
+  ansible.builtin.get_url:
+    url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+    dest: /opt/app/nexus.tar.gz
+
+- name: Extract nexus.tar.gz into /opt/app
+  ansible.builtin.unarchive:
+    src: /opt/app/nexus.tar.gz
+    dest: /opt/app
+    remote_src: yes
+
+- name: Change directory name
+  ansible.builtin.shell: mv /opt/app/nexus-3* /opt/app/nexus
+
+- name: Recursively change ownership of a directory
+  ansible.builtin.file:
+    path: /opt/app
+    state: directory
+    owner: nexus
+    group: nexus
+    recurse: yes
+
+- name: Change to run as user nexus
+  ansible.builtin.replace:
+    path: /opt/app/nexus/bin/nexus.rc
+    regexp: '#run_as_user=""'
+    replace: 'run_as_user="nexus"'
+    
+- name: Change nexus vm options
+  ansible.builtin.copy:
+    src: nexus.vmoptions
+    dest: /opt/app/nexus/bin/nexus.vmoptions
+
+- name: Configure limit of the nexus user
+  ansible.builtin.lineinfile:
+    path: /etc/security/limits.conf
+    line: nexus - nofile 65536
+    create: yes
+
+- name: Change path log file
+  ansible.builtin.replace:
+    path: /opt/app/nexus/etc/logback/logback.xml
+    regexp: '\${karaf\.data}/log'
+    replace: '/var/log/nexus'
+
+- name: Create service nexus
+  ansible.builtin.copy:
+    src: nexus.service
+    dest: /etc/systemd/system/nexus.service
+
+- name: Enable Nexus service
+  ansible.builtin.service:
+    name: nexus
+    state: started
+    enabled: yes
+
+- name: Wait Nexus to be available
+  ansible.builtin.wait_for:
+    port: "8081"
+    delay: 2
+
+- name: Check Nexus status
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:8081/service/rest/v1/status"
+    method: GET
+    status_code: 200
+    validate_certs: false
+  register: _result
+  retries: 100
+  delay: 5
+  until: _result.status == 200
+
+- name: Get default password nexus
+  ansible.builtin.command: cat /opt/app/sonatype-work/nexus3/admin.password
+  register: dpass
+
+- name: Print default password nexus
+  ansible.builtin.debug:
+    msg: 'admin password is {{ dpass.stdout }}'

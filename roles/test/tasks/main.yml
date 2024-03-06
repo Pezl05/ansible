@@ -1,0 +1,15 @@
+---
+# - name: Run Test script
+#   ansible.builtin.script: test.sh
+#   register: result
+#   changed_when: false
+
+# - debug:
+#     var: result.stdout_lines
+
+- name: Get subgroups
+  ansible.builtin.include_tasks: debug.yml
+  with_sequence: '{{ "2-" if (max_subgroup_level | int) > 0 else "count=" }}{{ max_subgroup_level }}'
+  loop_control:
+    loop_var: subgroup_level
+  when: max_subgroup_level > 0

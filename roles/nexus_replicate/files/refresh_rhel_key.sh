@@ -1,0 +1,4 @@
+#!/bin/bash
+
+openssl pkcs12 -export -in /etc/pki/entitlement/`ls -1 /etc/pki/entitlement/ | awk -F '.' '{print $1}' | grep [0-9]$`.pem -inkey /etc/pki/entitlement/`ls -1 /etc/pki/entitlement/ | awk -F '.' '{print $1}' | grep [0-9]$`-key.pem -name rhel-subscription -out /opt/apps/nexus/nexus/ssl/rhel-subscription.p12 -passout pass:OIo0Hu9tdBbg0JguHisK
+keytool -importkeystore -srckeystore /opt/apps/nexus/nexus/ssl/rhel-subscription.p12 -srcstoretype PKCS12 -srcstorepass OIo0Hu9tdBbg0JguHisK -deststorepass OIo0Hu9tdBbg0JguHisK -destkeystore /opt/apps/nexus/nexus/ssl/keystore.p12 -deststoretype PKCS12 -noprompt

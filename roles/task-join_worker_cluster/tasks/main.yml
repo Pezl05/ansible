@@ -1,0 +1,4 @@
+---
+- name: Worker Join Cluster
+  ansible.builtin.command: "{{ hostvars['master01']['worker-join'] }}"
+  changed_when: false

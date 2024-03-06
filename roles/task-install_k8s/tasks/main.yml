@@ -1,0 +1,127 @@
+---
+- name: Prerequisites install containerd
+  become: true
+  ansible.builtin.shell: |
+    cat > /etc/modules-load.d/containerd.conf <<EOF
+    overlay
+    br_netfilter
+    EOF
+    modprobe overlay
+    modprobe br_netfilter
+    cat > /etc/sysctl.d/99-kubernetes-cri.conf <<EOF
+    net.bridge.bridge-nf-call-iptables  = 1
+    net.ipv4.ip_forward                 = 1
+    net.bridge.bridge-nf-call-ip6tables = 1
+    EOF
+    sysctl --system
+  changed_when: false
+
+- name: Disable swap memory
+  become: true
+  ansible.builtin.shell: |
+    swapoff -a
+    sed -i '/swap/d' /etc/fstab
+  changed_when: false
+
+- name: Install containerd
+  ansible.builtin.yum:
+    state: present
+    name:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+
+- name: Add repository
+  ansible.builtin.command: yum-config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+  changed_when: false
+
+  # ansible.builtin.command: yum install -y yum install http://mirror.centos.org/centos/7/extras/x86_64/Packages/container-selinux-2.107-1.el7_6.noarch.rpm
+
+- name: Install container-selinux
+  ansible.builtin.yum:
+    state: present
+    name: http://mirror.centos.org/centos/7/extras/x86_64/Packages/container-selinux-2.107-1.el7_6.noarch.rpm
+
+  # ansible.builtin.shell: |
+  #   yum update -y
+  #   yum install -y containerd.io
+
+- name: Yum Update
+  ansible.builtin.yum:
+    name: '*'
+    state: latest
+    update_cache: true
+    update_only: true
+
+- name: Install containerd.io
+  ansible.builtin.yum:
+    state: present
+    name: containerd.io
+
+- name: Setup containerd
+  become: true
+  ansible.builtin.shell: |
+    mkdir -p /etc/containerd
+    containerd config default > /etc/containerd/config.toml
+  changed_when: false
+
+  # become: true
+  # shell: |
+  #   systemctl restart containerd
+  #   systemctl enable containerd
+
+- name: Service containerd restart and enable
+  ansible.builtin.service:
+    name: containerd
+    state: restarted
+    enabled: true
+
+- name: Install Kubernetes
+  become: true
+  ansible.builtin.shell: |
+    cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+    [kubernetes]
+    name=Kubernetes
+    baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+    enabled=1
+    gpgcheck=1
+    repo_gpgcheck=0
+    gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    EOF
+  changed_when: false
+
+- name: Install containerd
+  ansible.builtin.yum:
+    state: present
+    name:
+      - kubeadm-1.23.7
+      - kubelet-1.23.7
+      - kubectl-1.23.7
+
+  # become: true
+  # ansible.builtin.shell: |
+  #   systemctl enable kubelet
+  #   systemctl start kubelet
+
+- name: Service kubelet start and enable
+  ansible.builtin.service:
+    name: kubelet
+    state: started
+    enabled: true
+
+# - name: Check kubectl completion
+#   ansible.builtin.shell: grep -q kubectl ~/.bashrc && echo "1" || echo "0"
+#   register: check_bashrc
+#   changed_when: false
+
+# - name: Kubectl completion
+#   become: true
+#   ansible.builtin.shell: |
+#     echo 'source <(kubectl completion bash)' >> ~/.bashrc
+#     echo 'alias k=kubectl' >>~/.bashrc
+#     echo 'complete -o default -F __start_kubectl k' >>~/.bashrc
+#   when: check_bashrc.stdout == "0"
+#   changed_when: true
+
+# - name: Source bashrc
+#   ansible.builtin.shell: source ~/.bashrc

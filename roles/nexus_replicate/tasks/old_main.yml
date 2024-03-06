@@ -1,0 +1,81 @@
+---
+- name: Stop nexus service
+  ansible.builtin.service:
+    name: nexus
+    state: stopped
+
+- name: Synchronize db
+  ansible.posix.synchronize:
+    src: "{{ nexus_src_hostname }}:{{ nexus_home }}/db/"
+    dest: "{{ nexus_home }}/db/"
+    mode: pull
+    delete: true
+    rsync_path: "sudo rsync"
+    rsync_opts:
+      - --exclude='config/ldap*'
+      - --exclude='config/email*'
+      - --exclude='security/user*'
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Synchronize blobs storage
+  ansible.posix.synchronize:
+    src: "{{ nexus_src_hostname }}:{{ nexus_home }}/blobs/"
+    dest: "{{ nexus_home }}/blobs/"
+    mode: pull
+    rsync_path: "sudo rsync"
+    delete: true
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Delete restore-from-backup
+  ansible.builtin.file:
+    path: "{{ nexus_home }}/restore-from-backup"
+    state: "{{ item }}"
+    mode: "755"
+    owner: nexus
+    group: nexus
+  loop:
+    - absent
+    - directory
+
+- name: Change the owner of the files to nexus
+  ansible.builtin.file:
+    path: "{{ nexus_home }}"
+    state: directory
+    owner: nexus
+    group: nexus
+    recurse: true
+
+# - name: Run refresh_rhel_key script
+#   ansible.builtin.script: refresh_rhel_key.sh
+
+- name: Restart nexus service
+  ansible.builtin.service:
+    name: nexus
+    state: restarted
+
+- name: Wait Nexus to be available
+  ansible.builtin.wait_for:
+    port: "{{ nexus_port }}"
+    delay: 2
+
+- name: Check Nexus status
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ nexus_port }}/service/rest/v1/status"
+    method: GET
+    status_code: 200
+    validate_certs: false
+  register: _result
+  retries: 100
+  delay: 5
+  until: _result.status == 200
+
+- name: Reconcile component db and blobs storage
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ nexus_port }}/service/rest/v1/tasks/{{ item }}/run"
+    user: "{{ nexus_dest_user }}"
+    password: "{{ nexus_dest_password }}"
+    force_basic_auth: true
+    method: POST
+    status_code: 204
+    validate_certs: false
+  loop: "{{ db_reconcile_task_id }}"

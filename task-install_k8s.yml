@@ -1,0 +1,34 @@
+---
+- name: Install Common
+  hosts: all
+  become: yes
+  roles:
+  - task-common
+
+- name: Install k8s
+  hosts: all
+  become: yes
+  roles:
+  - task-install_k8s
+
+# - name: Init Cluster
+#   hosts: main_master
+#   become: yes
+#   vars:
+#     HOST_COUNT: "{{ groups['master'] | length }}"
+#     END_POINT: "172.27.242.200:6443"
+#     MAIN_MASTER: "master01"
+#   roles:
+#   - task-init_cluster
+
+# - name: Join APIServer in Cluster
+#   hosts: oth_master
+#   become: yes
+#   roles:
+#   - task-join_apiserver_cluster
+
+# - name: Join Worker in Cluster
+#   hosts: worker
+#   become: yes
+#   roles:
+#   - task-join_worker_cluster

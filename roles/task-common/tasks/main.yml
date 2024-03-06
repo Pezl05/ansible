@@ -1,0 +1,65 @@
+---
+
+  # ansible.builtin.shell: |
+  #   firewall-cmd --permanent --zone=public --add-service=http
+  #   firewall-cmd --permanent --zone=public --add-service=https
+  #   firewall-cmd --reload
+
+- name: Setting firewalld http/https
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    zone: public
+    permanent: true
+    state: enabled
+  with_items:
+    - http
+    - https
+
+  # ansible.builtin.shell: |
+  #   firewall-cmd --permanent --add-port=10250/tcp
+  #   firewall-cmd --permanent --add-port=10255/tcp
+  #   firewall-cmd --permanent --add-port=8472/udp
+  #   firewall-cmd --permanent --add-port=30000-32767/tcp
+
+- name: Setting firewalld port
+  ansible.posix.firewalld:
+    port: "{{ item.port }}/{{ item.proto }}"
+    permanent: true
+    state: enabled
+  with_items:
+    - {port: "10250", proto: "tcp"}
+    - {port: "10255", proto: "tcp"}
+    - {port: "8472", proto: "udp"}
+    - {port: "30000-32767", proto: "tcp"}
+
+- name: Add masquerade
+  ansible.posix.firewalld:
+    masquerade: true
+    state: enabled
+    permanent: true
+
+- name: Reload service firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    state: reloaded
+
+- name: Install system updates for centos systems
+  ansible.builtin.yum:
+    name: '*'
+    state: latest
+    update_cache: true
+    update_only: true
+
+- name: Install Common Software
+  ansible.builtin.yum:
+    state: present
+    name:
+      # - epel-release
+      - git
+      - bash-completion
+      - nc
+      - vim
+      - net-tools
+
+- name: Source bash_completion
+  ansible.builtin.shell: source /etc/profile.d/bash_completion.sh

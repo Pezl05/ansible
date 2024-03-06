@@ -1,0 +1,67 @@
+---
+- name: test
+  hosts: localhost
+  become: true
+  vars_prompt:
+    - name: efirewall
+      prompt: "Do you want to enabled firewall (true/false)?"
+      default: false
+      private: false
+    - name: port
+      prompt: What port do you want to use for Nexus?
+      default: "8081"
+      private: false
+  vars:
+    choices: ["Linux","Windows","Mac"]
+  tasks:      
+
+  # - name: Create subgroups
+  #   vars:
+  #     _query_level: "[? length(@) == to_number('{{ subgroup_level }}')]"
+  #   ansible.builtin.debug:
+  #     msg: '{{ subgroup_level }}'
+  #   when: (max_subgroup_level | int) > 1
+  #   with_sequence: '2-{{ max_subgroup_level }}'
+  #   loop_control:
+  #     loop_var: subgroup_level
+
+  # - name: set
+  #   vars:
+  #     name: "{{ datafile | json_query('name') }}{{ array }}"
+  #   set_fact:
+  #     result: "{{ datafile | combine({ 'name': name }) }}"
+
+  # - debug:
+  #     var: result
+
+
+# - name: Replicate Nexus
+#   hosts: nexus,nexus-main
+#   become: true
+#   tasks:
+#   - name : Debug
+#     ansible.builtin.debug:
+#       msg: "Success"
+
+
+
+  # - name: Create a List variable and print it
+  #   set_fact: 
+  #     project1: ["COJ","PWA","AAA"]
+  #     project2: ["PWA","COJ","AAA","TCRB","SSO"]
+
+  # - name: List all groups that are not created on gitlab destination
+  #   vars:
+  #     _src_group_list: "{{ project1 }}"
+  #     _dest_group_list: "{{ project2}} "
+  #   ansible.builtin.set_fact:
+  #     _diff_group_list: "{{ project1 | difference(project2) }}"
+
+  # - name : Debug
+  #   ansible.builtin.debug:
+  #     var: _diff_group_list
+
+
+
+  # roles:
+  #   - test

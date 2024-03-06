@@ -1,0 +1,9 @@
+---
+- name: Replicate Nexus
+  hosts: nx03.localdomain
+  become: true
+  vars_files:
+    - group_vars/all.yml
+    - group_vars/nexus.yml
+  roles:
+    - nexus_replicate

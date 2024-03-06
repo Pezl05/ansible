@@ -1,0 +1,6 @@
+---
+- name: Install Nexus
+  hosts: nxred.localdomain
+  become: yes
+  roles:
+  - install-nexus

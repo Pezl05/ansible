@@ -1,0 +1,10 @@
+---
+### GENERAL ###
+nexus_src_hostname: nx02.localdomain
+nexus_dest_user: admin
+nexus_dest_password: admin
+db_reconcile_task_id:
+  - 0f9c62e8-5442-4cff-b5a0-7ed38d9025e9
+  - 707df02b-aa25-479d-9cb1-03073b277f27
+  - ca20c0ce-82b3-43cb-aa58-31c91263a094
+  - 07736e14-0aec-4aa8-8b79-94a57a5b4ee4

@@ -1,0 +1,38 @@
+---
+
+  # ansible.builtin.shell: |
+  #   firewall-cmd --permanent --add-port=6443/tcp
+  #   firewall-cmd --permanent --add-port=2379-2380/tcp
+  #   firewall-cmd --permanent --add-port=10250/tcp
+  #   firewall-cmd --permanent --add-port=10251/tcp
+  #   firewall-cmd --permanent --add-port=10252/tcp
+  #   firewall-cmd --permanent --add-port=10255/tcp
+  #   firewall-cmd --permanent --add-port=8472/udp
+  #   firewall-cmd --permanent --add-port=30000-32767/tcp
+
+- name: Setting Firewalld Master
+  ansible.posix.firewalld:
+    port: "{{ item.port }}/{{ item.proto }}"
+    permanent: true
+    state: enabled
+  with_items:
+    - {port: "6443", proto: "tcp"}
+    - {port: "2379-2380", proto: "tcp"}
+    - {port: "10251", proto: "tcp"}
+    - {port: "10252", proto: "tcp"}
+
+- name: Reload service firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    state: reloaded
+
+- name: API Server join Cluster
+  ansible.builtin.command: "{{ hostvars['master01']['master-join'] }} --apiserver-advertise-address={{ ansible_default_ipv4.address }}"
+  changed_when: false
+
+- name: Setting Kube Config
+  ansible.builtin.shell: |
+    mkdir -p $HOME/.kube
+    sudo cp -if /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+  changed_when: false
