@@ -21,14 +21,14 @@
           - --exclude='security/user*'
       delegate_to: "{{ inventory_hostname }}"
 
-    # - name: Synchronize blobs storage
-    #   ansible.posix.synchronize:
-    #     src: "{{ nexus_src_hostname }}:{{ nexus_home }}/blobs/"
-    #     dest: "{{ nexus_home }}/blobs/"
-    #     mode: pull
-    #     rsync_path: "sudo rsync"
-    #     delete: true
-    #   delegate_to: "{{ inventory_hostname }}"
+    - name: Synchronize blobs storage
+      ansible.posix.synchronize:
+        src: "{{ nexus_src_hostname }}:{{ nexus_home }}/blobs/"
+        dest: "{{ nexus_home }}/blobs/"
+        mode: pull
+        rsync_path: "sudo rsync"
+        delete: true
+      delegate_to: "{{ inventory_hostname }}"
 
     - name: Delete restore-from-backup
       ansible.builtin.file:
@@ -156,14 +156,14 @@
           - --exclude='config/email*'
           - --exclude='security/user*'
 
-    # - name: Synchronize blobs storage
-    #   ansible.posix.synchronize:
-    #     src: "{{ nexus_src_hostname }}:{{ nexus_home }}/blobs/"
-    #     dest: "{{ nexus_home }}/blobs/"
-    #     mode: pull
-    #     rsync_path: "sudo rsync"
-    #     delete: true
-    #   delegate_to: "{{ inventory_hostname }}"
+    - name: Synchronize blobs storage
+      ansible.posix.synchronize:
+        src: "{{ nexus_src_hostname }}:{{ nexus_home }}/blobs/"
+        dest: "{{ nexus_home }}/blobs/"
+        mode: pull
+        rsync_path: "sudo rsync"
+        delete: true
+      delegate_to: "{{ inventory_hostname }}"
 
     - name: Change the owner of the files to nexus
       ansible.builtin.file:
