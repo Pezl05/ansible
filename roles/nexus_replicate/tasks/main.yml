@@ -1,4 +1,3 @@
----
 - name: Block task Synchronize failed
   block:
     - name: Stop nexus service
@@ -22,14 +21,14 @@
           - --exclude='security/user*'
       delegate_to: "{{ inventory_hostname }}"
 
-    - name: Synchronize blobs storage
-      ansible.posix.synchronize:
-        src: "{{ nexus_src_hostname }}:{{ nexus_home }}/blobs/"
-        dest: "{{ nexus_home }}/blobs/"
-        mode: pull
-        rsync_path: "sudo rsync"
-        delete: true
-      delegate_to: "{{ inventory_hostname }}"
+    # - name: Synchronize blobs storage
+    #   ansible.posix.synchronize:
+    #     src: "{{ nexus_src_hostname }}:{{ nexus_home }}/blobs/"
+    #     dest: "{{ nexus_home }}/blobs/"
+    #     mode: pull
+    #     rsync_path: "sudo rsync"
+    #     delete: true
+    #   delegate_to: "{{ inventory_hostname }}"
 
     - name: Delete restore-from-backup
       ansible.builtin.file:
@@ -85,6 +84,57 @@
         validate_certs: false
       loop: "{{ db_reconcile_task_id }}"
 
+    - name: check status
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ nexus_port }}/service/rest/v1/status/check"
+        user: "{{ nexus_dest_user }}"
+        password: "{{ nexus_dest_password }}"
+        force_basic_auth: true
+        method: GET
+        status_code: 200
+        validate_certs: false
+      register: status_nexus
+
+    - ansible.builtin.debug:
+        var: status_nexus.json
+
+    # - name: List Repositories
+    #   ansible.builtin.uri:
+    #     url: "http://127.0.0.1:{{ nexus_port }}/service/rest/v1/repositorySettings"
+    #     user: "{{ nexus_dest_user }}"
+    #     password: "{{ nexus_dest_password }}"
+    #     force_basic_auth: true
+    #     method: GET
+    #     status_code: 200
+    #     validate_certs: false
+    #   register: repo
+
+    # - name: Query Only blobStoreName Test
+    #   set_fact:
+    #     repo_npds: "{{ repo.json | selectattr('storage.blobStoreName', 'search', 'Test') | list }}"
+    #     repo_prds: "{{ repo.json | rejectattr('storage.blobStoreName', 'search', 'Test') | list }}"
+        
+    # - name: Delete Repo NPD
+    #   ansible.builtin.uri:
+    #     url: "http://127.0.0.1:{{ nexus_port }}/service/rest/v1/repositories/{{ item.name }}"
+    #     user: "{{ nexus_dest_user }}"
+    #     password: "{{ nexus_dest_password }}"
+    #     force_basic_auth: true
+    #     method: DELETE
+    #     status_code: 204
+    #     validate_certs: false
+    #   loop: "{{ repo_npds }}"
+
+    # - name: Delete Blob Store NPD
+    #   ansible.builtin.uri:
+    #     url: "http://127.0.0.1:{{ nexus_port }}/service/rest/v1/blobstores/Test"
+    #     user: "{{ nexus_dest_user }}"
+    #     password: "{{ nexus_dest_password }}"
+    #     force_basic_auth: true
+    #     method: DELETE
+    #     status_code: 204
+    #     validate_certs: false
+
   rescue:
     - name: Stop nexus service
       ansible.builtin.service:
@@ -105,16 +155,15 @@
           - --exclude='config/ldap*'
           - --exclude='config/email*'
           - --exclude='security/user*'
-      delegate_to: "{{ inventory_hostname }}"
 
-    - name: Synchronize blobs storage
-      ansible.posix.synchronize:
-        src: "{{ nexus_src_hostname }}:{{ nexus_home }}/blobs/"
-        dest: "{{ nexus_home }}/blobs/"
-        mode: pull
-        rsync_path: "sudo rsync"
-        delete: true
-      delegate_to: "{{ inventory_hostname }}"
+    # - name: Synchronize blobs storage
+    #   ansible.posix.synchronize:
+    #     src: "{{ nexus_src_hostname }}:{{ nexus_home }}/blobs/"
+    #     dest: "{{ nexus_home }}/blobs/"
+    #     mode: pull
+    #     rsync_path: "sudo rsync"
+    #     delete: true
+    #   delegate_to: "{{ inventory_hostname }}"
 
     - name: Change the owner of the files to nexus
       ansible.builtin.file:
@@ -158,3 +207,72 @@
         status_code: 204
         validate_certs: false
       loop: "{{ db_reconcile_task_id }}"
+
+    # - name: List Repositories
+    #   ansible.builtin.uri:
+    #     url: "http://127.0.0.1:{{ nexus_port }}/service/rest/v1/repositorySettings"
+    #     user: "{{ nexus_dest_user }}"
+    #     password: "{{ nexus_dest_password }}"
+    #     force_basic_auth: true
+    #     method: GET
+    #     status_code: 200
+    #     validate_certs: false
+    #   register: repo
+
+    # - name: Query Only blobStoreName Test
+    #   set_fact:
+    #     repo_npds: "{{ repo.json | selectattr('storage.blobStoreName', 'search', 'Test') | list }}"
+    #     repo_prds: "{{ repo.json | rejectattr('storage.blobStoreName', 'search', 'Test') | list }}"
+        
+    # - name: Delete Repo NPD
+    #   ansible.builtin.uri:
+    #     url: "http://127.0.0.1:{{ nexus_port }}/service/rest/v1/repositories/{{ item.name }}"
+    #     user: "{{ nexus_dest_user }}"
+    #     password: "{{ nexus_dest_password }}"
+    #     force_basic_auth: true
+    #     method: DELETE
+    #     status_code: 204
+    #     validate_certs: false
+    #   loop: "{{ repo_npds }}"
+
+    # - name: Delete Blob Store NPD
+    #   ansible.builtin.uri:
+    #     url: "http://127.0.0.1:{{ nexus_port }}/service/rest/v1/blobstores/Test"
+    #     user: "{{ nexus_dest_user }}"
+    #     password: "{{ nexus_dest_password }}"
+    #     force_basic_auth: true
+    #     method: DELETE
+    #     status_code: 204
+    #     validate_certs: false
+
+# - name: Extract paths with 'latest' keyword
+#   set_fact:
+#     latest_paths: "{{ repo.json['items'] | selectattr('path', 'search', 'latest') | list }}"
+#     non_latest_paths: "{{ assets.json['items'] | rejectattr('path', 'search', 'lasted') | list }}"
+
+# - name: 
+#   debug: 
+#     msg: "{{ item.path }}"
+#   loop: non_latest_paths
+
+# - name: Get Asset
+#   ansible.builtin.uri:
+#     url: "http://127.0.0.1:{{ nexus_port }}/service/rest/v1/assets/{{ item.id }}"
+#     user: "{{ nexus_dest_user }}"
+#     password: "{{ nexus_dest_password }}"
+#     force_basic_auth: true
+#     method: GET
+#     status_code: 200
+#     validate_certs: false
+#   register: asset
+#   loop: "{{ latest_paths }}"
+
+# - debug:
+#     var: asset['results']
+
+# - debug:
+#     msg: "path : {{ item.json.path }} , id : {{ item.json.id }}"
+#   with_items: "{{ asset['results'] }}"
+
+
+
