@@ -1,6 +1,6 @@
 ---
 - name: Replicate Nexus
-  hosts: nx03.localdomain
+  hosts: "{{ nexus_server }}"
   become: true
   vars_files:
     - group_vars/all.yml
