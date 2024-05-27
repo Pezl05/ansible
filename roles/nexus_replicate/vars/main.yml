@@ -12,5 +12,9 @@ nexus_dest_password: !vault |
 db_reconcile_task_id:
   - 0f9c62e8-5442-4cff-b5a0-7ed38d9025e9
   - 707df02b-aa25-479d-9cb1-03073b277f27
+  - ea2dec41-29fe-43fb-8570-8b6172d5268c
   - ca20c0ce-82b3-43cb-aa58-31c91263a094
+  - 1ffa7cc9-258b-44e2-b8fc-40622ab76b71
+  - ca12cdb1-5c41-4b04-a30e-98a30945b10c
+  - c51f6f9d-8ce1-4209-96d1-f8852d5df6d1
   - 07736e14-0aec-4aa8-8b79-94a57a5b4ee4
