@@ -1,2 +1,6 @@
 ---
 tool_path: /opt/app
+root_path: /opt
+backup_path: /backup
+restore_date: "{{ ansible_date_time.date }}" # YYYY-MM-DD
+
