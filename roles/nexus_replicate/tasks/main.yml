@@ -21,14 +21,14 @@
           - --exclude='security/user*'
       delegate_to: "{{ inventory_hostname }}"
 
-    - name: Synchronize blobs storage
-      ansible.posix.synchronize:
-        src: "{{ nexus_src_hostname }}:{{ nexus_home }}/blobs/"
-        dest: "{{ nexus_home }}/blobs/"
-        mode: pull
-        rsync_path: "sudo rsync"
-        delete: true
-      delegate_to: "{{ inventory_hostname }}"
+    # - name: Synchronize blobs storage
+    #   ansible.posix.synchronize:
+    #     src: "{{ nexus_src_hostname }}:{{ nexus_home }}/blobs/"
+    #     dest: "{{ nexus_home }}/blobs/"
+    #     mode: pull
+    #     rsync_path: "sudo rsync"
+    #     delete: true
+    #   delegate_to: "{{ inventory_hostname }}"
 
     - name: Delete restore-from-backup
       ansible.builtin.file:
@@ -207,6 +207,20 @@
         status_code: 204
         validate_certs: false
       loop: "{{ db_reconcile_task_id }}"
+
+    - name: check status
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ nexus_port }}/service/rest/v1/status/check"
+        user: "{{ nexus_dest_user }}"
+        password: "{{ nexus_dest_password }}"
+        force_basic_auth: true
+        method: GET
+        status_code: 200
+        validate_certs: false
+      register: status_nexus
+
+    - ansible.builtin.debug:
+        var: status_nexus.json
 
     # - name: List Repositories
     #   ansible.builtin.uri:
