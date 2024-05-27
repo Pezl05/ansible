@@ -1,0 +1,6 @@
+---
+nexus_root: /opt
+nexus_home: "{{ nexus_root }}/nexusdata/nexus3"
+nexus_port: 8081
+restore_path: "{{ nexus_home }}/restore-from-backup"
+db_path: "{{ nexus_home }}/db"
