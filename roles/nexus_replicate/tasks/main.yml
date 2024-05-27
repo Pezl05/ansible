@@ -29,6 +29,17 @@
     #     rsync_path: "sudo rsync"
     #     delete: true
     #   delegate_to: "{{ inventory_hostname }}"
+    
+    - name: Delete Directory Blobs and Cache
+      ansible.builtin.file:
+        path: "{{ nexus_home }}/{{ item }}"
+        state: "absent"
+        mode: "755"
+        owner: nexus
+        group: nexus
+      loop:
+        - blobs
+        - cache
 
     - name: Delete restore-from-backup
       ansible.builtin.file:
