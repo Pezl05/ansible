@@ -6,8 +6,8 @@
   - name: List Repositories
     ansible.builtin.uri:
       url: "https://nx02.localdomain:8443/service/rest/v1/components?repository=test-few"
-      user: "admin"
-      password: "admin"
+      user: admin
+      password: admin
       force_basic_auth: true
       method: GET
       status_code: 200
