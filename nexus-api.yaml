@@ -12,4 +12,5 @@
       method: GET
       status_code: 200
       validate_certs: false
+      ca_crt: /opt/nexus/etc/ssl/nexus.cert
     register: repo
