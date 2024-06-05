@@ -1,0 +1,15 @@
+---
+- name: test
+  hosts: localhost
+  become: true
+  tasks:
+  - name: List Repositories
+    ansible.builtin.uri:
+      url: "https://127.0.0.1:{{ 8443 }}/service/rest/v1/repositorySettings"
+      user: "admin"
+      password: "admin"
+      force_basic_auth: true
+      method: GET
+      status_code: 200
+      validate_certs: false
+    register: repo
